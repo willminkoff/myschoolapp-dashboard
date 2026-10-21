@@ -6,7 +6,12 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-NODE_BIN="$(command -v node)"
+# Prefer the private Node runtime from install.sh, else system Node.
+if [ -x "$PROJECT_DIR/.node/bin/node" ]; then
+  NODE_BIN="$PROJECT_DIR/.node/bin/node"
+else
+  NODE_BIN="$(command -v node)"
+fi
 AGENTS_DIR="$HOME/Library/LaunchAgents"
 UID_NUM="$(id -u)"
 mkdir -p "$AGENTS_DIR" "$PROJECT_DIR/data"
