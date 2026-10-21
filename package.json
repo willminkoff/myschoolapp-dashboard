@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "description": "One dashboard for your kids' assignments and grades across multiple Blackbaud myschoolapp schools",
+  "author": "Will Minkoff",
   "license": "MIT",
+  "main": "electron/main.js",
   "scripts": {
+    "app": "electron .",
+    "dist": "electron-builder --mac",
     "init": "node src/cli.js init",
     "login": "node src/cli.js login",
     "probe": "node src/cli.js probe",
@@ -16,5 +20,47 @@
   },
   "dependencies": {
     "playwright": "^1.49.0"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.willminkoff.myschoolapp-dashboard",
+    "productName": "School Dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!config.json",
+      "!config.example.json",
+      "!data/**",
+      "!dist/**",
+      "!dashboard",
+      "!install.sh",
+      "!scripts/**",
+      "!sample/**",
+      "!src/relogin.js",
+      "!src/browser.js",
+      "!src/login.js",
+      "!node_modules/playwright/**",
+      "!node_modules/playwright-core/**",
+      "!node_modules/@playwright/**"
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    }
   }
 }

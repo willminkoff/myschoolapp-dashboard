@@ -53,7 +53,9 @@ rm "$APP_DIR/.app.tar.gz"
 
 say "Installing dependencies…"
 cd "$APP_DIR"
-"$NPM_BIN" install --no-audit --no-fund --loglevel=error
+# --omit=dev skips the Mac app's build toolchain (Electron) — the CLI
+# only needs the production dependencies.
+"$NPM_BIN" install --omit=dev --no-audit --no-fund --loglevel=error
 
 # The login window prefers installed Google Chrome; only download Playwright's
 # browser when Chrome is missing.

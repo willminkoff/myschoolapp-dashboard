@@ -29,7 +29,23 @@ its dedicated browser profile click through. If renewal ever fails, the
 dashboard keeps showing the last good data with a banner telling you which
 school needs a quick re-login. Nothing ever leaves your machine.
 
-## Install (macOS — the easy way)
+## The Mac app (easiest)
+
+There's a double-clickable menu-bar app — no Terminal at all. Download the
+`.dmg` from [Releases](https://github.com/willminkoff/myschoolapp-dashboard/releases),
+drag **School Dashboard** into Applications, and open it. A 🎓 appears in your
+menu bar: a first-run wizard asks for your schools, opens a sign-in window for
+each (you type your own password/MFA — the app keeps only session cookies),
+and then builds your dashboard. The app refreshes on its own at 6:30am, noon,
+4pm and 8pm, renews expired school sessions silently, and can start at login
+from its menu.
+
+> **Current builds are unsigned**, so the first launch needs right-click →
+> **Open** → **Open** (macOS Gatekeeper). See
+> [Building & signing the Mac app](#building--signing-the-mac-app) if you're
+> building your own.
+
+## Install (macOS — the Terminal way)
 
 Open Terminal (⌘-space, type "Terminal") and paste:
 
@@ -115,6 +131,42 @@ dumps raw API responses into `data/probe-<schoolId>/`; the endpoint mappings
 all live in [src/providers/myschoolapp.js](src/providers/myschoolapp.js).
 Sessions needing a manual re-login are named on the dashboard itself.
 `npm run demo` renders the dashboard with sample data if you just want to see it.
+
+## Building & signing the Mac app
+
+The menu-bar app is Electron, sharing the CLI's provider and renderer code.
+Its data lives in `~/Library/Application Support/myschoolapp-dashboard/`,
+completely separate from a CLI install — you can run both.
+
+```bash
+npm install          # includes electron + electron-builder (dev deps)
+npm run app          # run the tray app from source, for development
+npm run dist         # build dist/School Dashboard-<version>-universal.dmg
+```
+
+The build is **unsigned** by default, so Gatekeeper makes users right-click →
+Open on first launch and some browsers warn on download. Distributing without
+those warnings requires an [Apple Developer Program](https://developer.apple.com/programs/)
+membership ($99/year) for signing + notarization. Once you have it, signing is
+a drop-in — no config changes needed, electron-builder picks it up from the
+environment:
+
+1. In Xcode (or developer.apple.com), create a **Developer ID Application**
+   certificate and install it in your login keychain.
+2. Create an app-specific password for your Apple ID at
+   [appleid.apple.com](https://appleid.apple.com) (for notarization).
+3. Build with the credentials in the environment:
+
+   ```bash
+   export APPLE_ID="you@example.com"
+   export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+   export APPLE_TEAM_ID="YOURTEAMID"
+   npm run dist
+   ```
+
+   electron-builder finds the Developer ID certificate in your keychain,
+   signs the app, and notarizes it with Apple automatically when those
+   variables are set.
 
 ## Roadmap
 

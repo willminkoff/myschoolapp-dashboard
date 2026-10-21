@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>School Dashboard Setup</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1b2430; --muted: #66707d;
+    --line: #e3e7ec; --accent: #2563eb; --ok: #2e7d32; --err: #c62828;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11151c; --card: #1a202b; --text: #e8edf4; --muted: #94a0ae;
+      --line: #2a3340; --accent: #60a5fa; --ok: #66bb6a; --err: #ef5350;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 28px 20px 40px; }
+  h1 { font-size: 21px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+          padding: 16px; margin-bottom: 14px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+  input[type=text], input[type=email] {
+    width: 100%; padding: 8px 10px; font: inherit; color: var(--text);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  button { font: inherit; border-radius: 8px; padding: 9px 16px; cursor: pointer;
+           border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.link { border: none; background: none; color: var(--accent); padding: 4px 0; }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .error { color: var(--err); font-size: 14px; min-height: 20px; margin: 8px 0; }
+  .school-status { display: flex; justify-content: space-between; align-items: center;
+                   padding: 12px 4px; border-bottom: 1px solid var(--line); }
+  .school-status:last-child { border-bottom: none; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .step2 .sub { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Step 1: schools + login email -->
+  <section id="step1">
+    <h1>Welcome 👋</h1>
+    <p class="sub">One dashboard for every kid's assignments and grades.
+      First, which schools? Enter each school's <b>myschoolapp</b> web address —
+      the one you visit to check grades.</p>
+    <div id="schools"></div>
+    <button class="link" id="addSchool">+ Add another school</button>
+    <div class="card">
+      <label for="email">Your login email (optional)</label>
+      <input type="email" id="email" placeholder="parent@example.com">
+      <div class="hint">Used to pre-fill the sign-in form when sessions renew overnight.
+        Recommended if you sign in with Google. Never your password — the app
+        doesn't see or store passwords.</div>
+    </div>
+    <div class="error" id="err1"></div>
+    <div class="actions">
+      <button class="primary" id="toStep2">Continue</button>
+    </div>
+  </section>
+
+  <!-- Step 2: sign in to each school -->
+  <section id="step2" class="step2" hidden>
+    <h1>Sign in to each school</h1>
+    <p class="sub">A sign-in window will open for each school. Sign in as
+      yourself (the parent) — password, Google, MFA and all. The app keeps only
+      the session cookies, on this Mac.</p>
+    <div class="card" id="signinList"></div>
+    <div class="error" id="err2"></div>
+    <div class="actions">
+      <button id="back">Back</button>
+      <button class="primary" id="finish" disabled>Build my dashboard</button>
+    </div>
+  </section>
+
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let state = { config: null, sessions: {} };
+
+  function schoolRow(host = "", name = "") {
+    const div = document.createElement("div");
+    div.className = "card school";
+    div.innerHTML = `
+      <label>School web address</label>
+      <input type="text" class="host" placeholder="stmarks.myschoolapp.com" value="">
+      <label>Display name</label>
+      <input type="text" class="name" placeholder="St. Mark's" value="">`;
+    div.querySelector(".host").value = host;
+    div.querySelector(".name").value = name;
+    return div;
+  }
+
+  function readSchools() {
+    return [...document.querySelectorAll("#schools .school")].map((d) => ({
+      host: d.querySelector(".host").value,
+      name: d.querySelector(".name").value,
+    }));
+  }
+
+  function renderSigninList() {
+    const list = $("signinList");
+    list.innerHTML = "";
+    let allDone = state.config.schools.length > 0;
+    for (const s of state.config.schools) {
+      const done = state.sessions[s.id];
+      allDone = allDone && done;
+      const row = document.createElement("div");
+      row.className = "school-status";
+      row.innerHTML = `<span></span><span></span>`;
+      row.children[0].textContent = s.name;
+      const right = row.children[1];
+      if (done) {
+        right.innerHTML = `<span class="ok">✓ Signed in</span>`;
+      } else {
+        const b = document.createElement("button");
+        b.textContent = "Sign in…";
+        b.onclick = async () => {
+          b.disabled = true; b.textContent = "Waiting for you to sign in…";
+          const r = await api.signIn(s.id);
+          if (r.ok) state.sessions[s.id] = true;
+          else $("err2").textContent = `Sign-in to ${s.name} didn't finish — try again.`;
+          renderSigninList();
+        };
+        right.appendChild(b);
+      }
+      list.appendChild(row);
+    }
+    $("finish").disabled = !allDone;
+  }
+
+  $("addSchool").onclick = () => $("schools").appendChild(schoolRow());
+
+  $("toStep2").onclick = async () => {
+    $("err1").textContent = "";
+    const r = await api.saveConfig({ schools: readSchools(), loginEmail: $("email").value });
+    if (r.error) { $("err1").textContent = r.error; return; }
+    state.config = r.config;
+    const fresh = await api.getState();
+    state.sessions = fresh.sessions;
+    renderSigninList();
+    $("step1").hidden = true;
+    $("step2").hidden = false;
+  };
+
+  $("back").onclick = () => { $("step2").hidden = true; $("step1").hidden = false; };
+  $("finish").onclick = () => api.finish();
+
+  (async () => {
+    state = await api.getState();
+    const schools = state.config?.schools?.length ? state.config.schools : [{}];
+    for (const s of schools) $("schools").appendChild(schoolRow(s.host || "", s.name || ""));
+    $("email").value = state.config?.loginEmail || "";
+  })();
+</script>
+</body>
+</html>
