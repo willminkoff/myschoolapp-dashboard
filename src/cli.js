@@ -65,12 +65,12 @@ switch (cmd) {
     break;
   }
   default:
-    console.log(`Usage:
-  npm run init                  interactive setup — writes config.json
-  npm run login -- <schoolId>   sign in once per school (browser window; cookies saved locally)
-  npm run fetch                 pull assignments + grades for all schools
-  npm run render                rebuild data/dashboard.html from the last fetch
-  npm run all                   fetch + render
-  npm run probe -- <schoolId>   dump raw API responses to data/probe-<schoolId>/ for debugging
-  npm run demo                  render the dashboard with sample data (no login needed)`);
+    console.log(`Usage: ./dashboard <command>   (or: npm run <command> [-- args])
+  init               interactive setup — writes config.json
+  login <schoolId>   sign in once per school (browser window; cookies saved locally)
+  all                fetch assignments + grades and rebuild the dashboard
+  open               open the dashboard in your browser
+  fetch | render     the two halves of "all"
+  probe <schoolId>   dump raw API responses to data/probe-<schoolId>/ for debugging
+  demo               render the dashboard with sample data (no login needed)`);
 }

@@ -29,10 +29,33 @@ its dedicated browser profile click through. If renewal ever fails, the
 dashboard keeps showing the last good data with a banner telling you which
 school needs a quick re-login. Nothing ever leaves your machine.
 
-## Setup
+## Install (macOS — the easy way)
 
-Requirements: [Node.js](https://nodejs.org) 20+, macOS or Linux
-(scheduling script is macOS; use cron on Linux). Google Chrome recommended.
+Open Terminal (⌘-space, type "Terminal") and paste:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/willminkoff/myschoolapp-dashboard/main/install.sh)"
+```
+
+That's the whole install: it sets up everything it needs in
+`~/myschoolapp-dashboard` (including its own private copy of Node — no
+sudo, no Homebrew, nothing system-wide), then asks for your schools. Finish
+with:
+
+```bash
+cd ~/myschoolapp-dashboard
+./dashboard login <schoolId>       # once per school — sign in in the window
+./dashboard all                    # fetch + build
+./dashboard open                   # bookmark this page!
+./scripts/install-automation.sh    # optional: auto-refresh 4× a day
+```
+
+Re-running the installer later updates the app and keeps your data.
+
+## Manual setup (developers / Linux)
+
+Requirements: [Node.js](https://nodejs.org) 20+. Google Chrome recommended.
+The scheduling script is macOS; use cron on Linux.
 
 ```bash
 git clone https://github.com/willminkoff/myschoolapp-dashboard.git
