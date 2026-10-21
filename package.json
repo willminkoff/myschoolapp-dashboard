@@ -1,0 +1,20 @@
+{
+  "name": "myschoolapp-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "One dashboard for your kids' assignments and grades across multiple Blackbaud myschoolapp schools",
+  "license": "MIT",
+  "scripts": {
+    "init": "node src/cli.js init",
+    "login": "node src/cli.js login",
+    "probe": "node src/cli.js probe",
+    "fetch": "node src/cli.js fetch",
+    "render": "node src/cli.js render",
+    "all": "node src/cli.js all",
+    "demo": "node src/cli.js demo"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

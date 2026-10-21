@@ -1,0 +1,9 @@
+{
+  "schools": [
+    { "id": "school1", "name": "School One", "host": "school1.myschoolapp.com" },
+    { "id": "school2", "name": "School Two", "host": "school2.myschoolapp.com" },
+    { "id": "school3", "name": "School Three", "host": "school3.myschoolapp.com" }
+  ],
+  "daysBack": 7,
+  "daysAhead": 14
+}
