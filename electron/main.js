@@ -39,6 +39,10 @@ for (const level of ["log", "warn", "error"]) {
   };
 }
 
+console.log(
+  `started v${app.getVersion()} packaged=${app.isPackaged} home=${HOME} exe=${process.execPath}`
+);
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let tray = null;
 let dashboardWin = null;
@@ -54,6 +58,33 @@ function loadConfigOrNull() {
 
 function dashboardFile() {
   return path.join(HOME, "data", "dashboard.html");
+}
+
+/**
+ * Bring a window to the front. An LSUIElement (menu-bar) app never activates
+ * on its own, so without stealing focus every window opens buried behind
+ * whatever app is frontmost.
+ */
+function present(win) {
+  win.show();
+  win.focus();
+  app.focus({ steal: true });
+}
+
+/** Mirror a window's renderer console + preload errors into app.log. */
+function pipeConsole(win, tag) {
+  win.webContents.on("console-message", (...args) => {
+    // Electron is migrating this event from positional args to an event
+    // object — take the message wherever it is.
+    const msg = args.find((a) => typeof a === "string") ?? args[0]?.message ?? "";
+    console.log(`[${tag}]`, msg);
+  });
+  win.webContents.on("preload-error", (_e, preloadPath, err) =>
+    console.error(`[${tag}] preload failed:`, preloadPath, err)
+  );
+  win.webContents.on("did-fail-load", (_e, code, desc, url) =>
+    console.error(`[${tag}] load failed ${code} ${desc} ${url}`)
+  );
 }
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
@@ -140,8 +171,7 @@ function scheduleNext() {
 // ── Windows ───────────────────────────────────────────────────────────────────
 function openDashboard() {
   if (dashboardWin && !dashboardWin.isDestroyed()) {
-    dashboardWin.show();
-    dashboardWin.focus();
+    present(dashboardWin);
     return;
   }
   dashboardWin = new BrowserWindow({
@@ -162,6 +192,8 @@ function openDashboard() {
     }
   });
   dashboardWin.on("closed", () => { dashboardWin = null; });
+  pipeConsole(dashboardWin, "dashboard");
+  present(dashboardWin);
   if (fs.existsSync(dashboardFile())) {
     dashboardWin.loadFile(dashboardFile());
   } else {
@@ -178,8 +210,7 @@ function openDashboard() {
 
 function openWizard() {
   if (wizardWin && !wizardWin.isDestroyed()) {
-    wizardWin.show();
-    wizardWin.focus();
+    present(wizardWin);
     return;
   }
   wizardWin = new BrowserWindow({
@@ -193,7 +224,10 @@ function openWizard() {
     },
   });
   wizardWin.on("closed", () => { wizardWin = null; });
+  pipeConsole(wizardWin, "wizard");
+  console.log("opening setup wizard");
   wizardWin.loadFile(path.join(__dirname, "wizard.html"));
+  present(wizardWin);
 }
 
 async function interactiveSignIn(school) {
@@ -313,7 +347,11 @@ ipcMain.handle("wizard:finish", async () => {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => openDashboard());
+  app.on("second-instance", () => {
+    console.log("second launch — fronting the existing instance");
+    if (loadConfigOrNull()) openDashboard();
+    else openWizard();
+  });
   app.on("window-all-closed", () => {}); // menu-bar app: stay alive
   await app.whenReady();
   if (process.platform === "darwin") app.dock?.hide();

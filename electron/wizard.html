@@ -87,6 +87,15 @@
   const $ = (id) => document.getElementById(id);
   let state = { config: null, sessions: {} };
 
+  // Surface anything that breaks instead of silently doing nothing —
+  // errors land in the visible step and (via console) in data/app.log.
+  function showError(msg) {
+    console.error("wizard error:", msg);
+    for (const id of ["err1", "err2"]) $(id).textContent = "Something broke: " + msg;
+  }
+  window.addEventListener("error", (ev) => showError(ev.message));
+  window.addEventListener("unhandledrejection", (ev) => showError(String(ev.reason)));
+
   function schoolRow(host = "", name = "") {
     const div = document.createElement("div");
     div.className = "card school";
@@ -156,6 +165,7 @@
   $("finish").onclick = () => api.finish();
 
   (async () => {
+    if (!window.api) return showError("the setup bridge did not load (preload failed)");
     state = await api.getState();
     const schools = state.config?.schools?.length ? state.config.schools : [{}];
     for (const s of schools) $("schools").appendChild(schoolRow(s.host || "", s.name || ""));

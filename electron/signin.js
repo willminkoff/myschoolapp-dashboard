@@ -1,4 +1,4 @@
-import { BrowserWindow, session as electronSession } from "electron";
+import { app, BrowserWindow, session as electronSession } from "electron";
 import fs from "node:fs";
 
 /**
@@ -133,6 +133,13 @@ export async function signIn(school, { headless = true, loginEmail = "", timeout
   });
   let closedByUser = false;
   win.on("closed", () => { closedByUser = true; });
+  if (!headless) {
+    // A menu-bar (LSUIElement) app never activates on its own — without a
+    // focus steal the sign-in window opens buried behind other apps.
+    win.show();
+    win.focus();
+    app.focus({ steal: true });
+  }
 
   try {
     await win.loadURL(`https://${school.host}/app`).catch(() => {});
