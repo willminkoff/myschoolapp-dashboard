@@ -14,13 +14,29 @@ import fs from "node:fs";
  */
 const PARTITION = "persist:msa-signin";
 
+// Google blocks sign-in from embedded Chromium ("This browser or app may not
+// be secure"): a Chrome-branded UA that doesn't fingerprint like real Chrome
+// fails its checks. A Firefox UA skips the Chrome-specific checks entirely —
+// the long-standing workaround for OAuth inside Electron. Blackbaud's portal
+// is browser-agnostic, so the whole partition can wear it.
+const FIREFOX_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0";
+
+let hintsStripped = false;
 function signinSession() {
   const ses = electronSession.fromPartition(PARTITION);
-  // Google refuses sign-in from UAs that look like embedded automation;
-  // drop the Electron/app tokens, like the CLI masks Playwright.
-  ses.setUserAgent(
-    ses.getUserAgent().replace(/\s?(Electron|myschoolapp-dashboard|school-dashboard|SchoolDashboard)\/\S+/gi, "")
-  );
+  ses.setUserAgent(FIREFOX_UA);
+  if (!hintsStripped) {
+    hintsStripped = true;
+    // Chromium still sends Sec-CH-UA client hints branding us as Chromium,
+    // contradicting the Firefox UA — real Firefox sends none, so drop them.
+    ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      for (const h of Object.keys(details.requestHeaders)) {
+        if (/^sec-ch-ua/i.test(h)) delete details.requestHeaders[h];
+      }
+      callback({ requestHeaders: details.requestHeaders });
+    });
+  }
   return ses;
 }
 

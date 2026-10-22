@@ -104,10 +104,9 @@ async function refresh(trigger = "manual") {
     });
     // The CLI's error banners say "npm run login" — translate for app users.
     for (const e of data.errors ?? []) {
-      e.message = e.message.replace(
-        /Fix with: npm run login -- \S+/,
-        "Fix it from the 🎓 menu: Sign In"
-      );
+      e.message = e.message
+        .replace(/Fix with: npm run login -- \S+/, "Fix it from the mortarboard 🎓 menu-bar icon: Sign In")
+        .replace(/Run: npm run login -- \S+/, "Sign in from the mortarboard 🎓 menu-bar icon.");
     }
     const html = renderDashboard(data);
     src.writeData("dashboard.html", html);
@@ -286,7 +285,7 @@ function updateTray() {
   items.push({ type: "separator" });
   items.push({ label: "Quit School Dashboard", role: "quit" });
   tray.setContextMenu(Menu.buildFromTemplate(items));
-  tray.setTitle(needsSignin.size ? "🎓⚠️" : "🎓");
+  tray.setTitle(needsSignin.size ? "⚠️" : "");
 }
 
 // ── Wizard IPC ────────────────────────────────────────────────────────────────
@@ -358,7 +357,9 @@ if (!app.requestSingleInstanceLock()) {
   // so awaiting it here deadlocks the app before any UI appears.
   app.whenReady().then(() => {
     if (process.platform === "darwin") app.dock?.hide();
-    tray = new Tray(nativeImage.createEmpty());
+    // The "Template" filename suffix makes macOS recolor the icon to match
+    // the menu bar in light/dark mode.
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "assets", "trayTemplate.png")));
     tray.setToolTip("School Dashboard");
     updateTray();
     scheduleNext();
@@ -372,6 +373,9 @@ if (!app.requestSingleInstanceLock()) {
       const data = src.readData("normalized.json");
       const age = data?.fetchedAt ? Date.now() - new Date(data.fetchedAt) : Infinity;
       if (age > 3 * 3600e3) refresh("launch");
+      // When the user opens the app themself, show the dashboard — a
+      // menu-bar app that launches with no window at all looks broken.
+      if (!app.getLoginItemSettings().wasOpenedAtLogin) openDashboard();
     }
   });
 }
