@@ -23,7 +23,10 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
           padding: 16px; margin-bottom: 14px; }
   label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
-  input[type=text], input[type=email], select {
+  .time-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .time-row input { width: auto; }
+  .time-row .remove { padding: 4px 9px; }
+  input[type=text], input[type=email], input[type=time], select {
     width: 100%; padding: 8px 10px; font: inherit; color: var(--text);
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   }
@@ -63,7 +66,7 @@
         doesn't see or store passwords.</div>
     </div>
     <div class="card">
-      <label for="digestMethod">"What's due" digest (optional)</label>
+      <label for="digestMethod">What's Due Digest (optional)</label>
       <select id="digestMethod">
         <option value="">Off</option>
         <option value="imessage">Text message (iMessage)</option>
@@ -71,12 +74,13 @@
       </select>
       <label for="digestTo">Send to</label>
       <input type="text" id="digestTo" placeholder="+1 615 555 1234, spouse@example.com">
-      <label for="digestTimes">Also send automatically at (optional)</label>
-      <input type="text" id="digestTimes" placeholder="06:45, 15:30">
+      <label>Send automatically at (optional)</label>
+      <div id="digestTimes"></div>
+      <button type="button" class="link" id="addTime">+ Add a time</button>
       <div class="hint">A short note of what's due today and tomorrow, per kid — sent
         from this Mac's Messages or Mail (macOS asks to allow it the first time).
-        You can always send one on demand from the menu-bar icon; leave the times
-        blank for on-demand only.</div>
+        Send one any time from the menu-bar icon: "Send What's Due Digest";
+        add no times for on-demand only.</div>
     </div>
     <div class="error" id="err1"></div>
     <div class="actions">
@@ -165,6 +169,20 @@
 
   $("addSchool").onclick = () => $("schools").appendChild(schoolRow());
 
+  // Native time pickers show 12-hour AM/PM per the user's locale but always
+  // hand back standardized 24-hour "HH:MM" values for the scheduler.
+  function timeRow(value = "") {
+    const div = document.createElement("div");
+    div.className = "time-row";
+    div.innerHTML = `<input type="time"><button type="button" class="remove" title="Remove">✕</button>`;
+    div.querySelector("input").value = value;
+    div.querySelector(".remove").onclick = () => div.remove();
+    return div;
+  }
+  $("addTime").onclick = () => $("digestTimes").appendChild(timeRow());
+  const readTimes = () =>
+    [...document.querySelectorAll("#digestTimes input")].map((i) => i.value).filter(Boolean);
+
   $("toStep2").onclick = async () => {
     $("err1").textContent = "";
     const r = await api.saveConfig({
@@ -173,7 +191,7 @@
       digest: {
         method: $("digestMethod").value,
         to: $("digestTo").value,
-        times: $("digestTimes").value,
+        times: readTimes(),
       },
     });
     if (r.error) { $("err1").textContent = r.error; return; }
@@ -197,7 +215,7 @@
     const d = state.config?.digest;
     $("digestMethod").value = d?.method || "";
     $("digestTo").value = (d?.to || []).join(", ");
-    $("digestTimes").value = (d?.times || []).join(", ");
+    for (const t of d?.times || []) $("digestTimes").appendChild(timeRow(t));
   })();
 </script>
 </body>

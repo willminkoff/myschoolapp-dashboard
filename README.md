@@ -111,14 +111,14 @@ The dashboard page also reloads itself every 15 minutes, so a pinned tab
 stays current. Remove the automation anytime with
 `./scripts/uninstall-automation.sh`.
 
-## The "what's due" digest (text or email)
+## The What's Due Digest (text or email)
 
 A short note — strictly what's due **today and tomorrow**, per kid — sent
 through your Mac's own Messages (iMessage) or Mail app, so there's nothing to
 sign up for and no mail server involved. macOS asks once to allow it.
 
 In the Mac app: turn it on in **Set Up Schools…** (method + recipients), then
-send any time from the menu-bar icon — **Text Me the Digest Now** — or list
+send any time from the menu-bar icon — **Send What's Due Digest** — or list
 automatic send times like `06:45, 15:30`.
 
 From the CLI, add a `digest` section to `config.json`:

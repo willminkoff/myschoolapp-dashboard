@@ -37,13 +37,27 @@ function item(a) {
 }
 
 /**
+ * iMessage needs a handle that matches an account: "6153945567" silently
+ * goes nowhere, "+16153945567" delivers. Emails pass through untouched.
+ */
+function normalizeHandle(h) {
+  h = String(h).trim();
+  if (h.includes("@")) return h;
+  const digits = h.replace(/[^\d+]/g, "");
+  if (digits.startsWith("+")) return digits;
+  if (/^1\d{10}$/.test(digits)) return "+" + digits;
+  if (/^\d{10}$/.test(digits)) return "+1" + digits;
+  return h;
+}
+
+/**
  * Build the digest as plain text (iMessage-friendly): nothing but what's
  * due today and tomorrow, per kid.
  */
 export function buildDigest(data, { now = new Date() } = {}) {
   const today = startOfDay(now);
   const lines = [
-    `📚 Due — ${now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}`,
+    `📚 What's Due — ${now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}`,
   ];
 
   for (const s of data.students ?? []) {
@@ -116,9 +130,9 @@ export async function sendDigest({ dry = false } = {}) {
     throw new Error('No "digest" section in config.json — see README (Morning digest).');
   }
   if (d.method === "imessage") {
-    for (const to of d.to) await sendIMessage(text, to);
+    for (const to of d.to) await sendIMessage(text, normalizeHandle(to));
   } else if (d.method === "email") {
-    await sendMail(`Due today & tomorrow — ${new Date().toLocaleDateString()}`, text, d.to);
+    await sendMail(`What's Due — ${new Date().toLocaleDateString()}`, text, d.to.map(normalizeHandle));
   } else {
     throw new Error(`Unknown digest method "${d.method}" (use "imessage" or "email").`);
   }

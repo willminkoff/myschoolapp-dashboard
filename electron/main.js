@@ -301,12 +301,14 @@ function updateTray() {
       const school = config.schools.find((s) => s.id === id) ?? { id, name: id };
       items.push({ label: `⚠️ Sign in to ${school.name}`, click: () => interactiveSignIn(school) });
     }
-    if (config.digest?.to?.length) {
-      items.push({
-        label: config.digest.method === "email" ? "Email the Digest Now" : "Text Me the Digest Now",
-        click: () => sendDigestNow("menu"),
-      });
-    }
+    const digestReady = Boolean(config.digest?.to?.length);
+    items.push({
+      // Unconfigured, this opens setup — the item stays discoverable.
+      label: digestReady
+        ? `Send What's Due Digest (${config.digest.method === "email" ? "email" : "text"})`
+        : "Set Up What's Due Digest…",
+      click: () => (digestReady ? sendDigestNow("menu") : openWizard()),
+    });
     items.push({ type: "separator" });
     items.push({
       label: "Sign In",
