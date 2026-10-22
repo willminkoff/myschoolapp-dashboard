@@ -29,7 +29,28 @@ its dedicated browser profile click through. If renewal ever fails, the
 dashboard keeps showing the last good data with a banner telling you which
 school needs a quick re-login. Nothing ever leaves your machine.
 
-## Install (macOS — the easy way)
+## The Mac app (easiest)
+
+There's a double-clickable menu-bar app, **School Board** — no Terminal at
+all. Download the `.dmg` from
+[Releases](https://github.com/willminkoff/myschoolapp-dashboard/releases),
+drag **School Board** into Applications, and open it. A graduation-cap
+icon appears in your menu bar: a first-run wizard asks for your schools, opens
+a sign-in window for each (you type your own password/MFA — the app keeps only
+session cookies), and then builds your dashboard. The app refreshes on its own
+at 6:30am, noon, 4pm and 8pm, renews expired school sessions silently, and can
+start at login from its menu.
+
+Sign-in happens in your installed **Google Chrome** (Google refuses to sign
+in inside app windows), so have Chrome installed if your schools use Google
+SSO. Schools with plain email/password sign-in work even without Chrome.
+
+> **Current builds are unsigned**, so the first launch needs right-click →
+> **Open** → **Open** (macOS Gatekeeper). See
+> [Building & signing the Mac app](#building--signing-the-mac-app) if you're
+> building your own.
+
+## Install (macOS — the Terminal way)
 
 Open Terminal (⌘-space, type "Terminal") and paste:
 
@@ -90,6 +111,25 @@ The dashboard page also reloads itself every 15 minutes, so a pinned tab
 stays current. Remove the automation anytime with
 `./scripts/uninstall-automation.sh`.
 
+## The What's Due Digest (text or email)
+
+A short note — strictly what's due **today and tomorrow**, per kid — sent
+through your Mac's own Messages (iMessage) or Mail app, so there's nothing to
+sign up for and no mail server involved. macOS asks once to allow it.
+
+In the Mac app: turn it on in **Set Up Schools…** (method + recipients), then
+send any time from the menu-bar icon — **Send What's Due Digest** — or list
+automatic send times like `06:45, 15:30`.
+
+From the CLI, add a `digest` section to `config.json`:
+
+```json
+"digest": { "method": "imessage", "to": ["+16155551234"], "times": ["06:45"] }
+```
+
+then run `./dashboard digest` (or `--dry` to preview; schedule it with cron or
+an extra launchd entry if you want it automatic).
+
 ## Sharing with your spouse (Tailscale)
 
 With the `--web` server installed, expose it to your private tailnet only:
@@ -115,6 +155,42 @@ dumps raw API responses into `data/probe-<schoolId>/`; the endpoint mappings
 all live in [src/providers/myschoolapp.js](src/providers/myschoolapp.js).
 Sessions needing a manual re-login are named on the dashboard itself.
 `npm run demo` renders the dashboard with sample data if you just want to see it.
+
+## Building & signing the Mac app
+
+The menu-bar app is Electron, sharing the CLI's provider and renderer code.
+Its data lives in `~/Library/Application Support/myschoolapp-dashboard/`,
+completely separate from a CLI install — you can run both.
+
+```bash
+npm install          # includes electron + electron-builder (dev deps)
+npm run app          # run the tray app from source, for development
+npm run dist         # build dist/School Board-<version>-universal.dmg
+```
+
+The build is **unsigned** by default, so Gatekeeper makes users right-click →
+Open on first launch and some browsers warn on download. Distributing without
+those warnings requires an [Apple Developer Program](https://developer.apple.com/programs/)
+membership ($99/year) for signing + notarization. Once you have it, signing is
+a drop-in — no config changes needed, electron-builder picks it up from the
+environment:
+
+1. In Xcode (or developer.apple.com), create a **Developer ID Application**
+   certificate and install it in your login keychain.
+2. Create an app-specific password for your Apple ID at
+   [appleid.apple.com](https://appleid.apple.com) (for notarization).
+3. Build with the credentials in the environment:
+
+   ```bash
+   export APPLE_ID="you@example.com"
+   export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+   export APPLE_TEAM_ID="YOURTEAMID"
+   npm run dist
+   ```
+
+   electron-builder finds the Developer ID certificate in your keychain,
+   signs the app, and notarizes it with Apple automatically when those
+   variables are set.
 
 ## Roadmap
 

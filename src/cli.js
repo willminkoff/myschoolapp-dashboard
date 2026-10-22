@@ -59,6 +59,11 @@ switch (cmd) {
     await render(await fetchAll());
     break;
   }
+  case "digest": {
+    const { sendDigest } = await import("./digest.js");
+    await sendDigest({ dry: arg === "--dry" });
+    break;
+  }
   case "demo": {
     const { sampleData } = await import("../sample/sample-data.js");
     await render(sampleData());
@@ -72,5 +77,6 @@ switch (cmd) {
   open               open the dashboard in your browser
   fetch | render     the two halves of "all"
   probe <schoolId>   dump raw API responses to data/probe-<schoolId>/ for debugging
+  digest [--dry]     text/email what's due today & tomorrow (config "digest"; --dry prints)
   demo               render the dashboard with sample data (no login needed)`);
 }

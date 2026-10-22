@@ -76,7 +76,12 @@ async function fetchSchool(school) {
   return result;
 }
 
-export async function fetchAll() {
+/**
+ * @param {{relogin?: (school) => Promise<boolean>}} [options] — the Electron
+ * app injects its own BrowserWindow-based session renewal here; the CLI
+ * defaults to the Playwright one in relogin.js.
+ */
+export async function fetchAll({ relogin } = {}) {
   const config = loadConfig();
   const previous = readData("normalized.json");
 
@@ -100,8 +105,8 @@ export async function fetchAll() {
         // The portal's auth cookie dies daily; renew it headlessly via the
         // Google session kept in the browser profile, then retry once.
         console.log(`  ${school.name}: session expired, renewing headlessly…`);
-        const { reloginHeadless } = await import("./relogin.js");
-        if (!(await reloginHeadless(school))) throw err;
+        const renew = relogin ?? (await import("./relogin.js")).reloginHeadless;
+        if (!(await renew(school))) throw err;
         result = await fetchSchool(school);
       }
       out.students.push(...result.students);

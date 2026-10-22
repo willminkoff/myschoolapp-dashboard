@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// The Electron app points MSA_DASHBOARD_HOME at its own per-user folder
+// (~/Library/Application Support/…) so a packaged app never writes inside
+// its read-only bundle. The CLI leaves it unset and keeps using the repo.
+const root =
+  process.env.MSA_DASHBOARD_HOME ||
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const DATA_DIR = path.join(root, "data");
 export const SESSIONS_DIR = path.join(DATA_DIR, "sessions");
 
