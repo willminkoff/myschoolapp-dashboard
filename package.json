@@ -28,7 +28,7 @@
   },
   "build": {
     "appId": "com.willminkoff.myschoolapp-dashboard",
-    "productName": "School Dashboard",
+    "productName": "School Board",
     "directories": {
       "output": "dist"
     },

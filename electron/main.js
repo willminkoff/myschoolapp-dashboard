@@ -19,7 +19,7 @@ const { fetchAll } = await import("../src/fetcher.js");
 const { renderDashboard } = await import("../src/dashboard.js");
 const { signIn } = await import("./signin.js");
 
-app.setName("School Dashboard");
+app.setName("School Board");
 
 // ── Logging ───────────────────────────────────────────────────────────────────
 // The packaged app has no terminal; mirror console output to data/app.log.
@@ -251,7 +251,7 @@ function openWizard() {
   wizardWin = new BrowserWindow({
     width: 600,
     height: 700,
-    title: "School Dashboard Setup",
+    title: "School Board Setup",
     webPreferences: {
       preload: path.join(__dirname, "wizard-preload.cjs"),
       nodeIntegration: false,
@@ -325,7 +325,7 @@ function updateTray() {
     click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }),
   });
   items.push({ type: "separator" });
-  items.push({ label: "Quit School Dashboard", role: "quit" });
+  items.push({ label: "Quit School Board", role: "quit" });
   tray.setContextMenu(Menu.buildFromTemplate(items));
   tray.setTitle(needsSignin.size ? "⚠️" : "");
 }
@@ -416,7 +416,7 @@ if (!app.requestSingleInstanceLock()) {
     // The "Template" filename suffix makes macOS recolor the icon to match
     // the menu bar in light/dark mode.
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "assets", "trayTemplate.png")));
-    tray.setToolTip("School Dashboard");
+    tray.setToolTip("School Board");
     updateTray();
     scheduleNext();
     scheduleDigest();

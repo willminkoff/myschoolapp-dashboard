@@ -31,9 +31,10 @@ school needs a quick re-login. Nothing ever leaves your machine.
 
 ## The Mac app (easiest)
 
-There's a double-clickable menu-bar app — no Terminal at all. Download the
-`.dmg` from [Releases](https://github.com/willminkoff/myschoolapp-dashboard/releases),
-drag **School Dashboard** into Applications, and open it. A graduation-cap
+There's a double-clickable menu-bar app, **School Board** — no Terminal at
+all. Download the `.dmg` from
+[Releases](https://github.com/willminkoff/myschoolapp-dashboard/releases),
+drag **School Board** into Applications, and open it. A graduation-cap
 icon appears in your menu bar: a first-run wizard asks for your schools, opens
 a sign-in window for each (you type your own password/MFA — the app keeps only
 session cookies), and then builds your dashboard. The app refreshes on its own
@@ -164,7 +165,7 @@ completely separate from a CLI install — you can run both.
 ```bash
 npm install          # includes electron + electron-builder (dev deps)
 npm run app          # run the tray app from source, for development
-npm run dist         # build dist/School Dashboard-<version>-universal.dmg
+npm run dist         # build dist/School Board-<version>-universal.dmg
 ```
 
 The build is **unsigned** by default, so Gatekeeper makes users right-click →
