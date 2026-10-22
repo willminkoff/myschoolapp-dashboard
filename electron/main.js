@@ -353,20 +353,25 @@ if (!app.requestSingleInstanceLock()) {
     else openWizard();
   });
   app.on("window-all-closed", () => {}); // menu-bar app: stay alive
-  await app.whenReady();
-  if (process.platform === "darwin") app.dock?.hide();
-  tray = new Tray(nativeImage.createEmpty());
-  tray.setToolTip("School Dashboard");
-  updateTray();
-  scheduleNext();
+  // Never `await app.whenReady()` at top level in an ESM main process:
+  // Electron doesn't emit "ready" until this module finishes evaluating,
+  // so awaiting it here deadlocks the app before any UI appears.
+  app.whenReady().then(() => {
+    if (process.platform === "darwin") app.dock?.hide();
+    tray = new Tray(nativeImage.createEmpty());
+    tray.setToolTip("School Dashboard");
+    updateTray();
+    scheduleNext();
+    console.log("ready: tray up");
 
-  const config = loadConfigOrNull();
-  if (!config) {
-    openWizard();
-  } else {
-    // Refresh at launch when there's no data yet or it's gone stale.
-    const data = src.readData("normalized.json");
-    const age = data?.fetchedAt ? Date.now() - new Date(data.fetchedAt) : Infinity;
-    if (age > 3 * 3600e3) refresh("launch");
-  }
+    const config = loadConfigOrNull();
+    if (!config) {
+      openWizard();
+    } else {
+      // Refresh at launch when there's no data yet or it's gone stale.
+      const data = src.readData("normalized.json");
+      const age = data?.fetchedAt ? Date.now() - new Date(data.fetchedAt) : Infinity;
+      if (age > 3 * 3600e3) refresh("launch");
+    }
+  });
 }
