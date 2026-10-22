@@ -33,12 +33,16 @@ school needs a quick re-login. Nothing ever leaves your machine.
 
 There's a double-clickable menu-bar app — no Terminal at all. Download the
 `.dmg` from [Releases](https://github.com/willminkoff/myschoolapp-dashboard/releases),
-drag **School Dashboard** into Applications, and open it. A 🎓 appears in your
-menu bar: a first-run wizard asks for your schools, opens a sign-in window for
-each (you type your own password/MFA — the app keeps only session cookies),
-and then builds your dashboard. The app refreshes on its own at 6:30am, noon,
-4pm and 8pm, renews expired school sessions silently, and can start at login
-from its menu.
+drag **School Dashboard** into Applications, and open it. A graduation-cap
+icon appears in your menu bar: a first-run wizard asks for your schools, opens
+a sign-in window for each (you type your own password/MFA — the app keeps only
+session cookies), and then builds your dashboard. The app refreshes on its own
+at 6:30am, noon, 4pm and 8pm, renews expired school sessions silently, and can
+start at login from its menu.
+
+Sign-in happens in your installed **Google Chrome** (Google refuses to sign
+in inside app windows), so have Chrome installed if your schools use Google
+SSO. Schools with plain email/password sign-in work even without Chrome.
 
 > **Current builds are unsigned**, so the first launch needs right-click →
 > **Open** → **Open** (macOS Gatekeeper). See

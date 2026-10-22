@@ -1,5 +1,7 @@
 import { app, BrowserWindow, session as electronSession } from "electron";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 /**
  * Sign-in for the menu-bar app, replacing the CLI's Playwright flows
@@ -125,14 +127,42 @@ async function autoAdvance(win, { host, email, submittedEmail }) {
   }
 }
 
+function hasChrome() {
+  return ["/Applications/Google Chrome.app", path.join(os.homedir(), "Applications", "Google Chrome.app")]
+    .some((p) => fs.existsSync(p));
+}
+
 /**
- * Sign in to one school. Interactive (headless: false): a visible window
- * where the parent types their credentials and MFA themselves — never seen
- * or stored, only the session cookies are kept. Headless (default): silent
- * renewal that rides the Google session kept in the partition.
- * Resolves true when cookies were saved.
+ * Sign in to one school; resolves true when session cookies were saved.
+ *
+ * Preferred path: the user's real, installed Google Chrome, driven via
+ * playwright-core with the same persistent profile the CLI uses — Google
+ * flatly refuses to sign in inside any embedded/app window ("This browser
+ * or app may not be secure"), whatever it claims to be. Interactive mode
+ * opens a visible Chrome window where the parent types their credentials
+ * and MFA themselves; headless mode is the silent daily renewal riding the
+ * Google session kept in that profile.
+ *
+ * Without Chrome installed, falls back to an Electron window — fine for
+ * portals that don't use Google SSO.
  */
-export async function signIn(school, { headless = true, loginEmail = "", timeoutMs } = {}) {
+export async function signIn(school, { headless = true, loginEmail = "" } = {}) {
+  if (hasChrome()) {
+    try {
+      if (headless) {
+        const { reloginHeadless } = await import("../src/relogin.js");
+        return await reloginHeadless(school);
+      }
+      const { interactiveLogin } = await import("../src/login.js");
+      return await interactiveLogin(school);
+    } catch (err) {
+      console.warn(`Chrome sign-in failed (${err.message}) — using the built-in window`);
+    }
+  }
+  return signInWindow(school, { headless, loginEmail });
+}
+
+async function signInWindow(school, { headless = true, loginEmail = "", timeoutMs } = {}) {
   const { SESSIONS_DIR, sessionPath } = await import("../src/session.js");
   const ses = signinSession();
   const win = new BrowserWindow({
