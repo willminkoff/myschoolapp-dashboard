@@ -110,6 +110,25 @@ The dashboard page also reloads itself every 15 minutes, so a pinned tab
 stays current. Remove the automation anytime with
 `./scripts/uninstall-automation.sh`.
 
+## The "what's due" digest (text or email)
+
+A short note — strictly what's due **today and tomorrow**, per kid — sent
+through your Mac's own Messages (iMessage) or Mail app, so there's nothing to
+sign up for and no mail server involved. macOS asks once to allow it.
+
+In the Mac app: turn it on in **Set Up Schools…** (method + recipients), then
+send any time from the menu-bar icon — **Text Me the Digest Now** — or list
+automatic send times like `06:45, 15:30`.
+
+From the CLI, add a `digest` section to `config.json`:
+
+```json
+"digest": { "method": "imessage", "to": ["+16155551234"], "times": ["06:45"] }
+```
+
+then run `./dashboard digest` (or `--dry` to preview; schedule it with cron or
+an extra launchd entry if you want it automatic).
+
 ## Sharing with your spouse (Tailscale)
 
 With the `--web` server installed, expose it to your private tailnet only:

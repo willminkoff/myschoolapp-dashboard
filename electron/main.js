@@ -167,6 +167,42 @@ function scheduleNext() {
   }, msUntilNextScheduled() + 1000);
 }
 
+// ── Digest ────────────────────────────────────────────────────────────────────
+let digestTimer = null;
+
+async function sendDigestNow(trigger = "manual") {
+  try {
+    const { sendDigest } = await import("../src/digest.js");
+    await sendDigest();
+    console.log(`digest sent (${trigger})`);
+  } catch (err) {
+    console.error("digest failed:", err);
+    if (Notification.isSupported()) {
+      new Notification({ title: "Digest didn't send", body: String(err.message) }).show();
+    }
+  }
+}
+
+/** Optional scheduled sends — config.digest.times, e.g. ["06:45","15:30"]. */
+function scheduleDigest() {
+  clearTimeout(digestTimer);
+  const d = loadConfigOrNull()?.digest;
+  const times = (d?.times ?? []).map((t) => String(t).match(/^(\d{1,2}):(\d{2})$/)).filter(Boolean);
+  if (!d?.to?.length || !times.length) return;
+  const now = new Date();
+  let best = Infinity;
+  for (const [, h, m] of times) {
+    const t = new Date(now);
+    t.setHours(+h, +m, 0, 0);
+    if (t <= now) t.setDate(t.getDate() + 1);
+    best = Math.min(best, t - now);
+  }
+  digestTimer = setTimeout(async () => {
+    await sendDigestNow("scheduled");
+    scheduleDigest();
+  }, best + 1000);
+}
+
 // ── Windows ───────────────────────────────────────────────────────────────────
 function openDashboard() {
   if (dashboardWin && !dashboardWin.isDestroyed()) {
@@ -265,6 +301,12 @@ function updateTray() {
       const school = config.schools.find((s) => s.id === id) ?? { id, name: id };
       items.push({ label: `⚠️ Sign in to ${school.name}`, click: () => interactiveSignIn(school) });
     }
+    if (config.digest?.to?.length) {
+      items.push({
+        label: config.digest.method === "email" ? "Email the Digest Now" : "Text Me the Digest Now",
+        click: () => sendDigestNow("menu"),
+      });
+    }
     items.push({ type: "separator" });
     items.push({
       label: "Sign In",
@@ -298,7 +340,7 @@ ipcMain.handle("wizard:getState", () => {
   return { config, sessions };
 });
 
-ipcMain.handle("wizard:saveConfig", (_ev, { schools, loginEmail }) => {
+ipcMain.handle("wizard:saveConfig", (_ev, { schools, loginEmail, digest }) => {
   const cleaned = [];
   for (const s of schools) {
     const host = String(s.host || "").trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
@@ -320,8 +362,22 @@ ipcMain.handle("wizard:saveConfig", (_ev, { schools, loginEmail }) => {
   const email = String(loginEmail || "").trim();
   if (email) config.loginEmail = email;
   else delete config.loginEmail;
+
+  const method = digest?.method;
+  const to = String(digest?.to || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const times = String(digest?.times || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (method && to.length) {
+    for (const t of times) {
+      if (!/^\d{1,2}:\d{2}$/.test(t)) return { error: `"${t}" isn't a time like 15:30.` };
+    }
+    config.digest = { method, to, ...(times.length ? { times } : {}) };
+  } else {
+    delete config.digest;
+  }
+
   fs.writeFileSync(path.join(HOME, "config.json"), JSON.stringify(config, null, 2) + "\n");
   updateTray();
+  scheduleDigest();
   return { ok: true, config };
 });
 
@@ -363,6 +419,7 @@ if (!app.requestSingleInstanceLock()) {
     tray.setToolTip("School Dashboard");
     updateTray();
     scheduleNext();
+    scheduleDigest();
     console.log("ready: tray up");
 
     const config = loadConfigOrNull();

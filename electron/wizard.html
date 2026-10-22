@@ -23,7 +23,7 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
           padding: 16px; margin-bottom: 14px; }
   label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
-  input[type=text], input[type=email] {
+  input[type=text], input[type=email], select {
     width: 100%; padding: 8px 10px; font: inherit; color: var(--text);
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   }
@@ -61,6 +61,22 @@
       <div class="hint">Used to pre-fill the sign-in form when sessions renew overnight.
         Recommended if you sign in with Google. Never your password — the app
         doesn't see or store passwords.</div>
+    </div>
+    <div class="card">
+      <label for="digestMethod">"What's due" digest (optional)</label>
+      <select id="digestMethod">
+        <option value="">Off</option>
+        <option value="imessage">Text message (iMessage)</option>
+        <option value="email">Email (Apple Mail)</option>
+      </select>
+      <label for="digestTo">Send to</label>
+      <input type="text" id="digestTo" placeholder="+1 615 555 1234, spouse@example.com">
+      <label for="digestTimes">Also send automatically at (optional)</label>
+      <input type="text" id="digestTimes" placeholder="06:45, 15:30">
+      <div class="hint">A short note of what's due today and tomorrow, per kid — sent
+        from this Mac's Messages or Mail (macOS asks to allow it the first time).
+        You can always send one on demand from the menu-bar icon; leave the times
+        blank for on-demand only.</div>
     </div>
     <div class="error" id="err1"></div>
     <div class="actions">
@@ -151,7 +167,15 @@
 
   $("toStep2").onclick = async () => {
     $("err1").textContent = "";
-    const r = await api.saveConfig({ schools: readSchools(), loginEmail: $("email").value });
+    const r = await api.saveConfig({
+      schools: readSchools(),
+      loginEmail: $("email").value,
+      digest: {
+        method: $("digestMethod").value,
+        to: $("digestTo").value,
+        times: $("digestTimes").value,
+      },
+    });
     if (r.error) { $("err1").textContent = r.error; return; }
     state.config = r.config;
     const fresh = await api.getState();
@@ -170,6 +194,10 @@
     const schools = state.config?.schools?.length ? state.config.schools : [{}];
     for (const s of schools) $("schools").appendChild(schoolRow(s.host || "", s.name || ""));
     $("email").value = state.config?.loginEmail || "";
+    const d = state.config?.digest;
+    $("digestMethod").value = d?.method || "";
+    $("digestTo").value = (d?.to || []).join(", ");
+    $("digestTimes").value = (d?.times || []).join(", ");
   })();
 </script>
 </body>
