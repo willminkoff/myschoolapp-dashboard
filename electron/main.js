@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Notification, Tray, ipcMain, nativeImage, shell } from "electron";
+import { app, BrowserWindow, Menu, Notification, Tray, dialog, ipcMain, nativeImage, shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -203,6 +203,47 @@ function scheduleDigest() {
   }, best + 1000);
 }
 
+// ── Update check ──────────────────────────────────────────────────────────────
+/**
+ * Unsigned builds can't auto-update (Electron's updater requires a signed
+ * app on macOS), so this compares against the newest GitHub release and
+ * opens its page. Listing /releases (not /releases/latest) so pre-releases
+ * count too.
+ */
+async function checkForUpdates() {
+  app.focus({ steal: true });
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/willminkoff/myschoolapp-dashboard/releases?per_page=10",
+      { headers: { accept: "application/vnd.github+json", "user-agent": "school-board-app" } }
+    );
+    if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
+    const latest = (await res.json()).filter((r) => !r.draft)[0];
+    const current = app.getVersion();
+    const latestV = String(latest?.tag_name ?? "").replace(/^v/, "");
+    const newer =
+      latestV && latestV.localeCompare(current, undefined, { numeric: true }) > 0;
+    const { response } = await dialog.showMessageBox({
+      type: "info",
+      message: newer
+        ? `Version ${latestV} is available — you have ${current}.`
+        : `You're up to date (version ${current}).`,
+      detail: newer
+        ? "Download the new version, open the dmg, and drag School Board into Applications to replace this one. Your settings and sign-ins are kept."
+        : "",
+      buttons: newer ? ["Download", "Later"] : ["OK"],
+    });
+    if (newer && response === 0) shell.openExternal(latest.html_url);
+  } catch (err) {
+    console.error("update check failed:", err);
+    dialog.showMessageBox({
+      type: "warning",
+      message: "Couldn't check for updates.",
+      detail: String(err.message ?? err),
+    });
+  }
+}
+
 // ── Windows ───────────────────────────────────────────────────────────────────
 function openDashboard() {
   if (dashboardWin && !dashboardWin.isDestroyed()) {
@@ -319,6 +360,7 @@ function updateTray() {
     });
     items.push({ label: "Set Up Schools…", click: openWizard });
   }
+  items.push({ label: "Check for Updates…", click: checkForUpdates });
   items.push({
     label: "Start at Login",
     type: "checkbox",
