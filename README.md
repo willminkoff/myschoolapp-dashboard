@@ -45,6 +45,10 @@ Sign-in happens in your installed **Google Chrome** (Google refuses to sign
 in inside app windows), so have Chrome installed if your schools use Google
 SSO. Schools with plain email/password sign-in work even without Chrome.
 
+To update later: **Check for Updates…** in the menu tells you when a newer
+version exists and opens the download — install it over the old one; your
+settings and sign-ins are kept.
+
 > **Current builds are unsigned**, so the first launch needs right-click →
 > **Open** → **Open** (macOS Gatekeeper). See
 > [Building & signing the Mac app](#building--signing-the-mac-app) if you're
