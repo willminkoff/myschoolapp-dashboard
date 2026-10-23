@@ -1,25 +1,17 @@
 {
   "name": "myschoolapp-dashboard",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "One dashboard for your kids' assignments and grades across multiple Blackbaud myschoolapp schools",
+  "description": "School Board — a Mac menu-bar app for your kids' assignments and grades across multiple Blackbaud myschoolapp schools",
   "author": "Will Minkoff",
   "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
     "app": "electron .",
-    "dist": "electron-builder --mac",
-    "init": "node src/cli.js init",
-    "login": "node src/cli.js login",
-    "probe": "node src/cli.js probe",
-    "fetch": "node src/cli.js fetch",
-    "render": "node src/cli.js render",
-    "all": "node src/cli.js all",
-    "demo": "node src/cli.js demo"
+    "dist": "electron-builder --mac"
   },
   "dependencies": {
-    "playwright": "^1.49.0",
     "playwright-core": "^1.64.1"
   },
   "devDependencies": {
@@ -38,12 +30,7 @@
       "!config.example.json",
       "!data/**",
       "!dist/**",
-      "!dashboard",
-      "!install.sh",
-      "!scripts/**",
-      "!sample/**",
-      "!node_modules/playwright/**",
-      "!node_modules/@playwright/**"
+      "!scripts/**"
     ],
     "mac": {
       "category": "public.app-category.education",

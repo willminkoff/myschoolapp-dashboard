@@ -10,7 +10,7 @@ export function renderDashboard(data) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="900">
-<title>Family School Dashboard</title>
+<title>School Board</title>
 <style>
   :root {
     --bg: #f6f7f9; --card: #ffffff; --text: #1b2430; --muted: #66707d;
@@ -84,13 +84,13 @@ export function renderDashboard(data) {
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Family School Dashboard</h1><span class="stamp" id="stamp"></span></header>
+  <header><h1>School Board</h1><span class="stamp" id="stamp"></span></header>
   <div id="errors"></div>
   <div class="chips" id="chips"></div>
   <div id="sections"></div>
   <h2>Current grades</h2>
   <div id="grades"></div>
-  <footer>Data pulled from each school's myschoolapp portal with your parent account. Refresh with <code>npm run all</code>.</footer>
+  <footer>Data pulled from each school's myschoolapp portal with your parent account. School Board refreshes this page automatically a few times a day.</footer>
 </div>
 <script>
 const DATA = ${json};

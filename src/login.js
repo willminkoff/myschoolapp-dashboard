@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import { SESSIONS_DIR, sessionPath } from "./session.js";
 
 /**
@@ -7,7 +6,7 @@ import { SESSIONS_DIR, sessionPath } from "./session.js";
  * credentials (and MFA) yourself — this never sees or stores them. Once the
  * portal is loaded and /api/webapp/context answers, it saves the session
  * cookies to data/sessions/<schoolId>.json and closes. Returns true when the
- * cookies were saved; used by both the CLI wrapper below and the Mac app.
+ * cookies were saved.
  */
 export async function interactiveLogin(school, { log = console.log, timeoutMs = 5 * 60e3 } = {}) {
   const { launchProfile } = await import("./browser.js");
@@ -55,24 +54,4 @@ export async function interactiveLogin(school, { log = console.log, timeoutMs = 
   } finally {
     await ctx.close().catch(() => {});
   }
-}
-
-/** CLI wrapper: `npm run login -- <schoolId>`. */
-export async function login(school) {
-  let ok;
-  try {
-    ok = await interactiveLogin(school);
-  } catch {
-    console.error(
-      "Playwright is not installed. Run:\n  npm install\n  npx playwright install chromium"
-    );
-    process.exit(1);
-  }
-  if (!ok) {
-    console.error("Timed out after 5 minutes without a signed-in session. Nothing saved.");
-    process.exit(1);
-  }
-  const p = sessionPath(school.id);
-  console.log(`✅ Signed in. Session cookies saved to ${path.relative(process.cwd(), p)}`);
-  console.log(`   (Cookies only — no username or password is stored.)`);
 }

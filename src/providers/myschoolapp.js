@@ -4,11 +4,11 @@ import { cookieHeaderFor } from "../session.js";
 /**
  * Unofficial provider: calls the same internal JSON endpoints the
  * {school}.myschoolapp.com web UI uses, authenticated with the parent's
- * browser session cookies (captured via `npm run login -- <schoolId>`).
+ * browser session cookies (captured via the app's per-school sign-in).
  *
  * These endpoints are unsupported by Blackbaud and can change without notice.
  * They are centralized here so a breakage is a one-file fix. If a school's
- * responses don't match expectations, run `npm run probe -- <schoolId>` to
+ * responses don't match expectations, run probe() from src/fetcher.js to
  * dump the raw responses into data/probe-<schoolId>/ and adjust.
  */
 
@@ -108,7 +108,7 @@ export class MySchoolAppProvider extends Provider {
     if (students.length === 0) {
       throw new Error(
         `No children found in /api/webapp/context for "${this.school.id}". ` +
-          `Run: npm run probe -- ${this.school.id}  and check data/probe-${this.school.id}/context.json ` +
+          `Dump data/probe-${this.school.id}/context.json with probe() from src/fetcher.js ` +
           `to find where the student list lives, then update listStudents() in src/providers/myschoolapp.js.`
       );
     }
@@ -123,8 +123,7 @@ export class MySchoolAppProvider extends Provider {
     );
     if (typeof payload !== "object" || Array.isArray(payload)) {
       throw new Error(
-        `Unexpected assignments response for ${this.school.id}. ` +
-          `Run: npm run probe -- ${this.school.id}`
+        `Unexpected assignments response for ${this.school.id} — probe() in src/fetcher.js dumps the raw payloads.`
       );
     }
     const out = [];
