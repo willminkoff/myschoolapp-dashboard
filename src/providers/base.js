@@ -38,7 +38,7 @@ export class Provider {
 export class SessionExpiredError extends Error {
   constructor(schoolId) {
     super(
-      `Session for "${schoolId}" is missing or expired. Run: npm run login -- ${schoolId}`
+      `Session for "${schoolId}" is missing or expired — sign in again from the School Board menu (the graduation cap in the menu bar).`
     );
     this.schoolId = schoolId;
   }

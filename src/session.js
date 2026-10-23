@@ -14,9 +14,7 @@ export const SESSIONS_DIR = path.join(DATA_DIR, "sessions");
 export function loadConfig() {
   const p = path.join(root, "config.json");
   if (!fs.existsSync(p)) {
-    throw new Error(
-      "config.json not found. Copy config.example.json to config.json and fill in your schools' myschoolapp hosts."
-    );
+    throw new Error("config.json not found — run School Board's setup wizard first.");
   }
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }

@@ -130,7 +130,7 @@ export async function fetchAll({ relogin } = {}) {
           school: school.id,
           message: `${school.name}: couldn't refresh (${
             err instanceof SessionExpiredError ? "session expired" : err.message
-          }) — showing data from ${new Date(staleSince).toLocaleString()}. Fix with: npm run login -- ${school.id}`,
+          }) — showing data from ${new Date(staleSince).toLocaleString()}. Fix by signing in again from the School Board menu.`,
         });
       } else {
         out.errors.push({ school: school.id, message: msg });

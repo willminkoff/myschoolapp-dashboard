@@ -3,18 +3,11 @@ import { DATA_DIR } from "./session.js";
 
 /**
  * Launch the persistent automation browser profile. Prefers installed Google
- * Chrome (Google refuses sign-in in anything that isn't a real browser);
- * falls back to Playwright's bundled Chromium when Chrome isn't installed.
- * Works with the full `playwright` package (CLI) or the browser-less
- * `playwright-core` shipped inside the Mac app.
+ * Chrome (Google refuses sign-in in anything that isn't a real browser),
+ * driven by the browser-less playwright-core shipped inside the app.
  */
 export async function launchProfile({ headless = false } = {}) {
-  let chromium;
-  try {
-    ({ chromium } = await import("playwright"));
-  } catch {
-    ({ chromium } = await import("playwright-core"));
-  }
+  const { chromium } = await import("playwright-core");
   const opts = {
     headless,
     viewport: null,

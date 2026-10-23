@@ -102,15 +102,8 @@ async function refresh(trigger = "manual") {
       // instead of the CLI's Playwright flow.
       relogin: (school) => signIn(school, { loginEmail: config.loginEmail }),
     });
-    // The CLI's error banners say "npm run login" — translate for app users.
-    for (const e of data.errors ?? []) {
-      e.message = e.message
-        .replace(/Fix with: npm run login -- \S+/, "Fix it from the mortarboard 🎓 menu-bar icon: Sign In")
-        .replace(/Run: npm run login -- \S+/, "Sign in from the mortarboard 🎓 menu-bar icon.");
-    }
     const html = renderDashboard(data);
     src.writeData("dashboard.html", html);
-    src.writeData("site/index.html", html); // parity with the CLI (tailnet sharing)
     lastRefreshAt = new Date();
     updateSigninNeeded(config, data);
     if (dashboardWin && !dashboardWin.isDestroyed()) {
