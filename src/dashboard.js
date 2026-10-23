@@ -70,6 +70,8 @@ export function renderDashboard(data) {
            border: 1px solid var(--line); color: var(--muted); margin-left: 8px; vertical-align: 1px; }
   .badge.graded { color: var(--done); border-color: var(--done); }
   .badge.completed { color: var(--done); border-color: var(--done); }
+  .badge.overdue, .badge.missing, .badge.late { color: var(--overdue); border-color: var(--overdue); }
+  .det .dates { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
   .score { font-weight: 600; color: var(--done); }
   table { width: 100%; border-collapse: collapse; background: var(--card);
           border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -100,6 +102,9 @@ kids.forEach(k => { k.key = k.school + ":" + k.id; });
 let active = new Set(kids.map(k => k.key));
 
 const fmt = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" });
+const fmtDT = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+// Show the time only when the school set one (11:59 PM deadlines matter).
+const whenFull = iso => { const d = new Date(iso); return (d.getHours() || d.getMinutes()) ? fmtDT.format(d) : fmt.format(d); };
 const now = new Date();
 const startOfDay = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
 const today = startOfDay(now);
@@ -164,25 +169,36 @@ function render() {
       const kid = kidById[keyOf(a)];
       const score = a.pointsEarned != null && a.maxPoints != null
         ? '<span class="score">' + a.pointsEarned + "/" + a.maxPoints + "</span>" : "";
-      const badge = (a.status === "completed" || a.status === "graded")
-        ? '<span class="badge ' + a.status + '">' + a.status + "</span>" : "";
+      // Done states win; otherwise surface the portal's missing/late flags,
+      // or a plain overdue tag for anything pending past its due date.
+      let tag = "";
+      if (a.status === "completed" || a.status === "graded") tag = a.status;
+      else if (a.raw?.MissingInd) tag = "missing";
+      else if (a.raw?.LateInd) tag = "late";
+      else if (a.status === "overdue" || (a.dateDue && dayDiff(a.dateDue) < 0)) tag = "overdue";
+      const badge = tag ? '<span class="badge ' + tag + '">' + tag + "</span>" : "";
       const det = a.detail;
       const rid = String(a.raw?.AssignmentId ?? (a.school + (a.title||"")).replace(/\\W/g, ""));
-      const isExp = det && expanded.has(rid);
+      const isExp = expanded.has(rid);
       let detHtml = "";
       if (isExp) {
+        const dates = [
+          a.dateAssigned ? "Assigned " + fmt.format(new Date(a.dateAssigned)) : "",
+          a.dateDue ? "Due " + whenFull(a.dateDue) : "",
+        ].filter(Boolean).join("  ·  ");
         detHtml = '<div class="det" onclick="event.stopPropagation()">' +
-          (det.comment ? '<div class="comment">💬 ' + esc(det.comment) +
+          (dates ? '<div class="dates">📅 ' + dates + "</div>" : "") +
+          (det?.comment ? '<div class="comment">💬 ' + esc(det.comment) +
             (det.letter ? " — " + esc(det.letter) : "") + "</div>" : "") +
-          (det.instructions ? '<div class="ins">' + esc(det.instructions) + "</div>" : "") +
-          (det.links?.length ? '<div class="links">' + det.links.map(l =>
+          (det?.instructions ? '<div class="ins">' + esc(det.instructions) + "</div>" : "") +
+          (det?.links?.length ? '<div class="links">' + det.links.map(l =>
             '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">🔗 ' + esc(l.title) + "</a>").join("") + "</div>" : "") +
-          (det.files?.length ? '<div class="files">📎 ' + det.files.map(esc).join(" · ") + " (download via the school portal)</div>" : "") +
+          (det?.files?.length ? '<div class="files">📎 ' + det.files.map(esc).join(" · ") + " (download via the school portal)</div>" : "") +
           (a.maxPoints != null && a.pointsEarned == null ? '<div class="files">Worth ' + a.maxPoints + " points</div>" : "") +
           "</div>";
       }
-      return '<div class="row' + (det ? " can" : "") + (isExp ? " exp" : "") + '" style="--kidc:' + kid.color + '"' +
-        (det ? ' onclick="toggleRow(\\'' + rid + '\\')"' : "") + ">" +
+      return '<div class="row can' + (isExp ? " exp" : "") + '" style="--kidc:' + kid.color + '"' +
+        ' onclick="toggleRow(\\'' + rid + '\\')">' +
         '<div class="dot" title="' + esc(kid.name) + '"></div>' +
         '<div><div class="title">' + esc(a.title) + badge + "</div>" +
         '<div class="meta">' + esc(kid.name) + " · " + esc(a.className ?? "") +
