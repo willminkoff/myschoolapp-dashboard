@@ -28,6 +28,7 @@ const STATUS_MAP = {
 // The assignment-center payload arrives pre-bucketed by due date.
 // PastBeforeLastWeek is skipped — months of history we don't need.
 const ASSIGNMENT_BUCKETS = [
+  "Missing", // teacher-flagged missing work lives here, NOT in Overdue
   "Overdue",
   "DueToday",
   "DueTomorrow",

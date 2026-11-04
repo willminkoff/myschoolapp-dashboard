@@ -1,6 +1,6 @@
 {
   "name": "myschoolapp-dashboard",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "School Board — a Mac menu-bar app for your kids' assignments and grades across multiple Blackbaud myschoolapp schools",
