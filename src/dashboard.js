@@ -114,14 +114,18 @@ function bucket(a) {
   if (a.status === "graded") return "graded";
   if (!a.dateDue) return "later";
   const d = dayDiff(a.dateDue);
-  if (d < 0) return a.status === "completed" ? "graded" : "overdue";
+  // Trust the school's own flags: only teacher-flagged work (missing/late,
+  // status "overdue") is a problem. Anything else past its due date was
+  // almost certainly handed in on paper or done in class and never ticked
+  // off online — the portal retires those quietly, and so do we.
+  if (d < 0) return a.status === "overdue" ? "overdue" : "graded";
   if (d === 0) return "today";
   if (d === 1) return "tomorrow";
   if (d <= 7) return "week";
   return "later";
 }
 const BUCKETS = [
-  ["overdue", "Overdue"],
+  ["overdue", "Missing or overdue"],
   ["today", "Due today"],
   ["tomorrow", "Due tomorrow"],
   ["week", "Due this week"],
@@ -175,7 +179,7 @@ function render() {
       if (a.status === "completed" || a.status === "graded") tag = a.status;
       else if (a.raw?.MissingInd) tag = "missing";
       else if (a.raw?.LateInd) tag = "late";
-      else if (a.status === "overdue" || (a.dateDue && dayDiff(a.dateDue) < 0)) tag = "overdue";
+      else if (a.status === "overdue") tag = "overdue";
       const badge = tag ? '<span class="badge ' + tag + '">' + tag + "</span>" : "";
       const det = a.detail;
       const rid = String(a.raw?.AssignmentId ?? (a.school + (a.title||"")).replace(/\\W/g, ""));
